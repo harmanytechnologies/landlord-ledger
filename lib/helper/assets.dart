@@ -1,0 +1,66 @@
+class Assets {
+  static String facebook = 'assets/icons/facebook_icon.svg';
+  static String google = 'assets/icons/google.svg';
+  static String apple = 'assets/icons/apple.svg';
+  static String paypal = 'assets/icons/paypal.svg';
+  static String arrowForward = 'assets/icons/arrow_forward.svg';
+  static String cleaning = 'assets/icons/cleaning.svg';
+  static String profile = 'assets/icons/profile.svg';
+  static String home = 'assets/icons/home.svg';
+  static String card = 'assets/icons/credit_card.svg';
+  static String checkbox = 'assets/icons/Checkbox.svg';
+  static String cilListIcon = 'assets/icons/cil_list.svg';
+  static String shareIcon = 'assets/icons/shareIcon.svg';
+  static String bookingIcon = 'assets/icons/booking.svg';
+  static String searchIcon = 'assets/icons/searchIcon.svg';
+  static String notificationIcon = 'assets/icons/notification.svg';
+  static String alphaFitAppBarIcon = 'assets/icons/alphaFitIcon.svg';
+  static String carbonEditIcon = 'assets/icons/carbon_edit.svg';
+  static String dashboardIcon = 'assets/icons/dashboardIcon.svg';
+  static String equipmentIcon = 'assets/icons/equipmentIcon.svg';
+  static String users = 'assets/icons/users.svg';
+  static String settings = 'assets/icons/settings.svg';
+  static String gps = 'assets/icons/gps.svg';
+
+  static const String imagesHomeBgImageOne = 'assets/images/homeBgImageOne.jpg';
+  static const String imagesHomeBgImageTwo = 'assets/images/homeBgImageTwo.jpg';
+  static const String imagesHomeBgImagethree = 'assets/images/homeBgImagethree.jpg';
+
+  //gym equipments
+  static String abCrunchMachine = 'assets/icons/ab_crunch_machine.svg';
+  static String adjustableBenchInclined = 'assets/icons/adjustable_bench_inclined.svg';
+  static String adjustableBenchReverseInclined = 'assets/icons/adjustable_bench_reverse_inclined.svg';
+  static String adjustableBenchUpperInclined = 'assets/icons/adjustable_bench_upper_inclined.svg';
+  static String adjustableBench = 'assets/icons/adjustable_bench.svg';
+  static String barbell = 'assets/icons/barbell.svg';
+  static String bench = 'assets/icons/bench.svg';
+  static String cablePulleyMachine = 'assets/icons/cable_pulley_machine.svg';
+  static String chestPressRack = 'assets/icons/chest_press_rack.svg';
+  static String climbingRope = 'assets/icons/climbing_rope.svg';
+  static String dipMachine = 'assets/icons/dip_machine.svg';
+  static String dumbell = 'assets/icons/dumbell.svg';
+  static String elliptical = 'assets/icons/elliptical.svg';
+  static String exerciceBike = 'assets/icons/exercice_bike.svg';
+  static String ezCurlBar = 'assets/icons/ez_curl_bar.svg';
+  static String hamstringCurl = 'assets/icons/hamstring_curl.svg';
+  static String icone10 = 'assets/icons/Icone_10.svg';
+  static String icone18 = 'assets/icons/Icone_18.svg';
+  static String icone19 = 'assets/icons/Icone_19.svg';
+  static String icone20 = 'assets/icons/Icone_20.svg';
+  static String icone21 = 'assets/icons/Icone_21.svg';
+  static String icone24 = 'assets/icons/Icone_24.svg';
+  static String icone31 = 'assets/icons/Icone_31.svg';
+  static String kettleBell = 'assets/icons/kettle_bell.svg';
+  static String latPullDownMachine = 'assets/icons/lat_pull_down_machine.svg';
+  static String legPressMachine = 'assets/icons/leg_press_machine.svg';
+  static String lowPulleyCableBench = 'assets/icons/low_pulley_cable_bench.svg';
+  static String rower = 'assets/icons/rower.svg';
+  static String seatedBike = 'assets/icons/seated_bike.svg';
+  static String skippingRope = 'assets/icons/skipping_rope.svg';
+  static String squatRack = 'assets/icons/squat_rack.svg';
+  static String stairMaster = 'assets/icons/stair_master.svg';
+  static String standardBarbell = 'assets/icons/standard_barbell.svg';
+  static String tBarbell = 'assets/icons/TBarbell.svg';
+  static String tire = 'assets/icons/tire.svg';
+  static String treadmill = 'assets/icons/treadmill.svg';
+}
