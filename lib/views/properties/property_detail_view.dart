@@ -6,9 +6,13 @@ import 'package:get/get.dart';
 
 import '../../controllers/property_controller.dart';
 import '../../controllers/tenant_controller.dart';
+import '../../controllers/expense_controller.dart';
 import '../../helper/colors.dart';
+import 'package:intl/intl.dart';
 import '../tenants/tenant_detail_view.dart';
 import '../tenants/tenant_form_view.dart';
+import '../expenses/expense_detail_view.dart';
+import '../expenses/expense_form_view.dart';
 
 class PropertyDetailView extends StatefulWidget {
   final String propertyId;
@@ -24,11 +28,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
   int _currentTabIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  int _expenseTabIndex = 0; // For expenses tab within property details
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       setState(() {
         _currentTabIndex = _tabController.index;
@@ -95,6 +100,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
         children: [
           _buildPropertyDetailsTab(context, property),
           _buildTenantsTab(context, widget.propertyId),
+          _buildExpensesTab(context, widget.propertyId),
         ],
       ),
       bottomNavigationBar: Container(
@@ -139,6 +145,11 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
               activeIcon: Icon(Icons.people),
               label: 'Tenants',
             ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: 'Expenses',
+            ),
           ],
         ),
       ),
@@ -157,7 +168,22 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
                 ),
               ),
             )
-          : null,
+          : _currentTabIndex == 2
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    Get.to(() => ExpenseFormView(propertyId: widget.propertyId));
+                  },
+                  backgroundColor: kSecondaryColor,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'Add Expense',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                )
+              : null,
     );
   }
 
@@ -367,6 +393,242 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
     );
   }
 
+  Widget _buildExpensesTab(BuildContext context, String propertyId) {
+    final expenseController = Get.put(ExpenseController());
+    final propertyController = Get.find<PropertyController>();
+
+    return Obx(
+      () {
+        final allExpenses = expenseController.getByPropertyId(propertyId);
+
+        // Apply search filter by title, category, notes
+        final query = _searchQuery.toLowerCase();
+        final searchedExpenses = allExpenses.where((e) {
+          if (query.isEmpty) return true;
+          final title = e.title.toLowerCase();
+          final category = e.category.toLowerCase();
+          final notes = (e.notes ?? '').toLowerCase();
+          return title.contains(query) || category.contains(query) || notes.contains(query);
+        }).toList();
+
+        final property = propertyController.getById(propertyId);
+        final dateFormat = DateFormat('MMM dd, yyyy');
+        final currencyFormat = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+
+        return Column(
+          children: [
+            // Professional Segmented Control Style Tabs
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: kBackgroundVarientColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    _buildExpenseTabButton(context, 'All', 0),
+                    _buildExpenseTabButton(context, 'Paid', 1),
+                    _buildExpenseTabButton(context, 'Due', 2),
+                  ],
+                ),
+              ),
+            ),
+            // iOS-styled Search Field
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: kBackgroundVarientColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: CupertinoSearchTextField(
+                  controller: _searchController,
+                  placeholder: 'Search expenses',
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  placeholderStyle: TextStyle(
+                    color: kTextColor.withOpacity(0.5),
+                  ),
+                  decoration: BoxDecoration(
+                    color: kBackgroundVarientColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+            // Tab content based on selected index
+            Expanded(
+              child: _buildExpenseListForTab(
+                context,
+                _expenseTabIndex == 0
+                    ? searchedExpenses
+                    : _expenseTabIndex == 1
+                        ? searchedExpenses.where((e) => e.isPaid).toList()
+                        : searchedExpenses.where((e) => !e.isPaid).toList(),
+                property,
+                dateFormat,
+                currencyFormat,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildExpenseListForTab(
+    BuildContext context,
+    List expenses,
+    property,
+    DateFormat dateFormat,
+    NumberFormat currencyFormat,
+  ) {
+    if (expenses.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: kSecondaryColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.receipt_long_outlined,
+                  size: 60,
+                  color: kSecondaryColor,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'No Expenses',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: kTextColor,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'No expenses in this view.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: kTextColor.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: expenses.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final expense = expenses[index];
+        return InkWell(
+          onTap: () {
+            Get.to(() => ExpenseDetailView(expenseId: expense.id));
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: kWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: kBackgroundVarientColor,
+                width: 1,
+              ),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        expense.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: kTextColor,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (property != null)
+                        Text(
+                          property.title,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: kTextColor.withOpacity(0.7),
+                                fontSize: 13,
+                              ),
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Due ${dateFormat.format(expense.date)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: kTextColor.withOpacity(0.5),
+                              fontSize: 12,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      currencyFormat.format(expense.amount),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: kTextColor,
+                          ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: expense.isPaid ? kGreenColor.withOpacity(0.15) : kRedColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        expense.isPaid ? 'Paid' : 'Due',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: expense.isPaid ? kGreenColor : kRedColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _sectionHeader(BuildContext context, String title) {
     return Text(
       title,
@@ -519,6 +781,48 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
           ],
         );
       },
+    );
+  }
+
+  Widget _buildExpenseTabButton(BuildContext context, String label, int index) {
+    final isSelected = _expenseTabIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _expenseTabIndex = index;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isSelected ? kSecondaryColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: kSecondaryColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isSelected ? Colors.white : kTextColor.withOpacity(0.7),
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

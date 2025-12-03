@@ -41,6 +41,7 @@ class ExpenseController extends GetxController {
     required DateTime date,
     String? notes,
     String? receiptPath,
+    bool isPaid = false,
   }) {
     final expense = Expense(
       id: const Uuid().v4(),
@@ -51,6 +52,7 @@ class ExpenseController extends GetxController {
       date: date,
       notes: notes,
       receiptPath: receiptPath,
+      isPaid: isPaid,
     );
     expenses.add(expense);
     _saveToHive();
@@ -84,5 +86,13 @@ class ExpenseController extends GetxController {
 
   List<Expense> getByCategory(String category) {
     return expenses.where((e) => e.category == category).toList();
+  }
+
+  List<Expense> getPaid() {
+    return expenses.where((e) => e.isPaid).toList();
+  }
+
+  List<Expense> getDue() {
+    return expenses.where((e) => !e.isPaid).toList();
   }
 }

@@ -7,6 +7,7 @@ class Expense {
   final DateTime date;
   final String? notes;
   final String? receiptPath; // local file path for receipt image
+  final bool isPaid; // true = Paid, false = Due
 
   Expense({
     required this.id,
@@ -17,6 +18,7 @@ class Expense {
     required this.date,
     this.notes,
     this.receiptPath,
+    this.isPaid = false,
   });
 
   Expense copyWith({
@@ -28,6 +30,7 @@ class Expense {
     DateTime? date,
     String? notes,
     String? receiptPath,
+    bool? isPaid,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -38,6 +41,7 @@ class Expense {
       date: date ?? this.date,
       notes: notes ?? this.notes,
       receiptPath: receiptPath ?? this.receiptPath,
+      isPaid: isPaid ?? this.isPaid,
     );
   }
 
@@ -51,6 +55,7 @@ class Expense {
       'date': date.toIso8601String(),
       'notes': notes,
       'receiptPath': receiptPath,
+      'isPaid': isPaid,
     };
   }
 
@@ -64,6 +69,7 @@ class Expense {
       date: map['date'] != null ? DateTime.parse(map['date'] as String) : DateTime.now(),
       notes: map['notes'] as String?,
       receiptPath: map['receiptPath'] as String?,
+      isPaid: map['isPaid'] as bool? ?? false,
     );
   }
 }

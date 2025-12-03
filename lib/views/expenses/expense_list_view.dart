@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -10,10 +11,38 @@ import '../../widgets/custom_button.dart';
 import 'expense_detail_view.dart';
 import 'expense_form_view.dart';
 
-class ExpenseListView extends StatelessWidget {
+class ExpenseListView extends StatefulWidget {
   static const routeName = '/expenses';
 
   const ExpenseListView({Key? key}) : super(key: key);
+
+  @override
+  State<ExpenseListView> createState() => _ExpenseListViewState();
+}
+
+class _ExpenseListViewState extends State<ExpenseListView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  int _currentTabIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _currentTabIndex = _tabController.index;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +76,11 @@ class ExpenseListView extends StatelessWidget {
             return _buildEmptyState(context, expenseController);
           }
 
-          return _buildExpensesList(context, expenseController, propertyController);
+          return _buildExpensesList(
+            context,
+            expenseController,
+            propertyController,
+          );
         },
       ),
       floatingActionButton: Obx(
@@ -83,13 +116,13 @@ class ExpenseListView extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: kPrimaryColor.withOpacity(0.1),
+                color: kSecondaryColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.receipt_long_outlined,
                 size: 60,
-                color: kPrimaryColor,
+                color: kSecondaryColor,
               ),
             ),
             const SizedBox(height: 32),
@@ -134,15 +167,115 @@ class ExpenseListView extends StatelessWidget {
   }
 
   Widget _buildExpensesList(BuildContext context, ExpenseController expenseController, PropertyController propertyController) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: expenseController.expenses.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final expense = expenseController.expenses[index];
-        final property = expense.propertyId != null ? propertyController.getById(expense.propertyId!) : null;
-        return _buildExpenseCard(context, expense, property);
-      },
+    // Start with all expenses
+    List expenses = expenseController.expenses.toList();
+
+    // Apply tab filter
+    if (_currentTabIndex == 1) {
+      // Paid
+      expenses = expenses.where((e) => e.isPaid).toList();
+    } else if (_currentTabIndex == 2) {
+      // Due
+      expenses = expenses.where((e) => !e.isPaid).toList();
+    }
+
+    // Apply search filter (by anything: title, property, category, notes)
+    final query = _searchQuery.toLowerCase();
+    if (query.isNotEmpty) {
+      expenses = expenses.where((e) {
+        final title = e.title.toLowerCase();
+        final category = e.category.toLowerCase();
+        final notes = (e.notes ?? '').toLowerCase();
+        final propertyTitle = e.propertyId != null ? (propertyController.getById(e.propertyId!)?.title.toLowerCase() ?? '') : '';
+        return title.contains(query) || category.contains(query) || notes.contains(query) || propertyTitle.contains(query);
+      }).toList();
+    }
+
+    return Column(
+      children: [
+        // Tabs: All, Paid, Due
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: kBackgroundVarientColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: kTextColor.withOpacity(0.7),
+              indicator: BoxDecoration(
+                color: kSecondaryColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+              ),
+              tabs: const [
+                Tab(text: 'All'),
+                Tab(text: 'Paid'),
+                Tab(text: 'Due'),
+              ],
+            ),
+          ),
+        ),
+        // Search Field
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Container(
+            decoration: BoxDecoration(
+              color: kBackgroundVarientColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: CupertinoSearchTextField(
+              controller: _searchController,
+              placeholder: 'Search by title, property, category, or notes',
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              style: Theme.of(context).textTheme.bodyMedium,
+              placeholderStyle: TextStyle(
+                color: kTextColor.withOpacity(0.5),
+              ),
+              decoration: BoxDecoration(
+                color: kBackgroundVarientColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Expenses List
+        Expanded(
+          child: expenses.isEmpty
+              ? Center(
+                  child: Text(
+                    'No expenses found',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: kTextColor.withOpacity(0.6),
+                        ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  itemCount: expenses.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final expense = expenses[index];
+                    final property = expense.propertyId != null ? propertyController.getById(expense.propertyId!) : null;
+                    return _buildExpenseCard(context, expense, property);
+                  },
+                ),
+        ),
+      ],
     );
   }
 
@@ -192,7 +325,7 @@ class ExpenseListView extends StatelessWidget {
                           ),
                     ),
                   const SizedBox(height: 4),
-                  // Date (light grey)
+                  // Due Date (light grey)
                   Text(
                     dateFormat.format(expense.date),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -203,14 +336,36 @@ class ExpenseListView extends StatelessWidget {
                 ],
               ),
             ),
-            // Amount (right side)
-            Text(
-              currencyFormat.format(expense.amount),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: kTextColor,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Amount (right side)
+                Text(
+                  currencyFormat.format(expense.amount),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: kTextColor,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                // Status Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: expense.isPaid ? kGreenColor.withOpacity(0.15) : kRedColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Text(
+                    expense.isPaid ? 'Paid' : 'Due',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: expense.isPaid ? kGreenColor : kRedColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

@@ -9,7 +9,7 @@ import '../../controllers/property_controller.dart';
 import '../../helper/colors.dart';
 import 'expense_form_view.dart';
 
-class ExpenseDetailView extends StatelessWidget {
+class ExpenseDetailView extends StatefulWidget {
   static const routeName = '/expenses/detail';
 
   final String expenseId;
@@ -17,10 +17,15 @@ class ExpenseDetailView extends StatelessWidget {
   const ExpenseDetailView({Key? key, required this.expenseId}) : super(key: key);
 
   @override
+  State<ExpenseDetailView> createState() => _ExpenseDetailViewState();
+}
+
+class _ExpenseDetailViewState extends State<ExpenseDetailView> {
+  @override
   Widget build(BuildContext context) {
     final expenseController = Get.put(ExpenseController());
     final propertyController = Get.find<PropertyController>();
-    final expense = expenseController.getById(expenseId);
+    final expense = expenseController.getById(widget.expenseId);
 
     if (expense == null) {
       return Scaffold(
@@ -114,8 +119,77 @@ class ExpenseDetailView extends StatelessWidget {
                   // Category
                   _buildInfoRow(context, Icons.category_outlined, 'Category', expense.category),
                   const SizedBox(height: 16),
-                  // Date
-                  _buildInfoRow(context, Icons.calendar_today_outlined, 'Date', dateFormat.format(expense.date)),
+                  // Due Date
+                  _buildInfoRow(
+                    context,
+                    Icons.calendar_today_outlined,
+                    'Due Date',
+                    dateFormat.format(expense.date),
+                  ),
+                  const SizedBox(height: 16),
+                  // Status (Paid / Due) - user friendly
+                  Text(
+                    'Status',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: kTextColor.withOpacity(0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: expense.isPaid
+                              ? kGreenColor.withOpacity(0.15)
+                              : kRedColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: expense.isPaid ? kGreenColor : kRedColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              expense.isPaid ? 'Paid' : 'Due',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: expense.isPaid ? kGreenColor : kRedColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          final updated = expense.copyWith(isPaid: !expense.isPaid);
+                          expenseController.updateExpense(updated);
+                          setState(() {});
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        child: Text(
+                          expense.isPaid ? 'Mark as Due' : 'Mark as Paid',
+                          style: TextStyle(
+                            color: kSecondaryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   // Notes
                   if (expense.notes != null && expense.notes!.trim().isNotEmpty) ...[
                     const SizedBox(height: 24),

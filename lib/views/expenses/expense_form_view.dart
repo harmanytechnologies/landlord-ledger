@@ -112,7 +112,7 @@ class _ExpenseFormViewState extends State<ExpenseFormView> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+      lastDate: DateTime(2100),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -224,9 +224,9 @@ class _ExpenseFormViewState extends State<ExpenseFormView> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          // Property Dropdown
+                          // Property Dropdown (Required - tied to a property)
                           Text(
-                            'Property (Optional)',
+                            'Property',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 6),
@@ -238,25 +238,19 @@ class _ExpenseFormViewState extends State<ExpenseFormView> {
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String?>(
+                              child: DropdownButton<String>(
                                 value: _selectedPropertyId,
                                 isExpanded: true,
                                 isDense: true,
                                 dropdownColor: kWhite,
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 hint: const Text('Select property'),
-                                items: [
-                                  const DropdownMenuItem<String?>(
-                                    value: null,
-                                    child: Text('None'),
-                                  ),
-                                  ...propertyController.properties.map((property) {
-                                    return DropdownMenuItem<String?>(
-                                      value: property.id,
-                                      child: Text(property.title),
-                                    );
-                                  }),
-                                ],
+                                items: propertyController.properties.map((property) {
+                                  return DropdownMenuItem<String>(
+                                    value: property.id,
+                                    child: Text(property.title),
+                                  );
+                                }).toList(),
                                 onChanged: (value) {
                                   setState(() {
                                     _selectedPropertyId = value;
@@ -303,9 +297,9 @@ class _ExpenseFormViewState extends State<ExpenseFormView> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          // Date Picker
+                          // Due Date Picker
                           Text(
-                            'Date',
+                            'Due Date',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 6),
@@ -423,6 +417,18 @@ class _ExpenseFormViewState extends State<ExpenseFormView> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (!_formKey.currentState!.validate()) return;
+
+                    // Validate property is selected (expense is tied to a property)
+                    if (_selectedPropertyId == null || _selectedPropertyId!.isEmpty) {
+                      Get.snackbar(
+                        'Error',
+                        'Please select a property',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: kRedColor.withOpacity(0.9),
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
 
                     final amount = double.parse(_amountController.text.trim());
 
