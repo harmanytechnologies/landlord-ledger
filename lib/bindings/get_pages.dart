@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../views/expenses/expense_detail_view.dart';
 import '../views/expenses/expense_form_view.dart';
 import '../views/expenses/expense_list_view.dart';
+import '../views/ledgers/ledger_detail_view.dart';
+import '../views/ledgers/ledger_form_view.dart';
 import '../views/properties/property_list_view.dart';
 import '../views/tenants/tenant_list_view.dart';
 
@@ -28,6 +30,15 @@ class GetPageList {
     GetPage(
       name: ExpenseDetailView.routeName,
       page: () => const ExpenseDetailView(expenseId: ''),
+    ),
+    // Ledger Routes
+    GetPage(
+      name: LedgerFormView.routeName,
+      page: () => const LedgerFormView(),
+    ),
+    GetPage(
+      name: LedgerDetailView.routeName,
+      page: () => const LedgerDetailView(ledgerId: ''),
     ),
   ];
 }
