@@ -10,14 +10,22 @@ import '../../helper/colors.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_button.dart';
 import '../reminders/reminder_list_view.dart';
+import '../subscriptions/subscription_view.dart';
 import '../tenants/tenant_list_view.dart';
 import 'property_detail_view.dart';
 import 'property_form_view.dart';
 
-class PropertyListView extends StatelessWidget {
+class PropertyListView extends StatefulWidget {
   static const routeName = '/properties';
 
   const PropertyListView({Key? key}) : super(key: key);
+
+  @override
+  State<PropertyListView> createState() => _PropertyListViewState();
+}
+
+class _PropertyListViewState extends State<PropertyListView> {
+  int _currentTabIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -27,17 +35,17 @@ class PropertyListView extends StatelessWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        title: Row(
+        title:  Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
+          if( _currentTabIndex == 0 ) ...[ Image.asset(
               'assets/images/logo.png',
               height: 32,
               width: 32,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 8),],
             Text(
-              'Landlord Ledger',
+              _currentTabIndex == 0 ? 'Landlord Ledger' : 'Subscription Plans',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
@@ -46,39 +54,107 @@ class PropertyListView extends StatelessWidget {
           ],
         ),
       ),
-      body: Obx(
-        () {
-          if (propertyController.properties.isEmpty) {
-            return _buildEmptyState(context, propertyController, subscriptionController);
-          }
-
-          return _buildPropertiesList(context, propertyController, tenantController);
-        },
-      ),
-      floatingActionButton: Obx(
-        () {
-          if (propertyController.properties.isEmpty) return const SizedBox.shrink();
-          return FloatingActionButton.extended(
-            onPressed: () {
-              final canAdd = subscriptionController.canAddProperty(propertyController.properties.length);
-              if (!canAdd) {
-                _showUpgradeDialog(context);
-                return;
+      body: IndexedStack(
+        index: _currentTabIndex,
+        children: [
+          // Properties Tab
+          Obx(
+            () {
+              if (propertyController.properties.isEmpty) {
+                return _buildEmptyState(context, propertyController, subscriptionController);
               }
-              Get.to(() => const PropertyFormView());
+              return _buildPropertiesList(context, propertyController, tenantController);
             },
-            backgroundColor: kSecondaryColor,
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text(
-              'Add Property',
-              style: TextStyle(
-                color: Colors.white,
+          ),
+          // Subscriptions Tab
+          const SubscriptionView(),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: kPrimaryColor,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            BottomNavigationBar(
+              currentIndex: _currentTabIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentTabIndex = index;
+                });
+              },
+              backgroundColor: Colors.transparent,
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white.withOpacity(0.7),
+              selectedLabelStyle: const TextStyle(
                 fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 14,
+              ),
+              type: BottomNavigationBarType.fixed,
+              elevation: 0,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.card_membership_outlined),
+                  activeIcon: Icon(Icons.card_membership),
+                  label: 'Subscriptions',
+                ),
+              ],
+            ),
+            // Vertical divider
+            Positioned(
+              left: MediaQuery.of(context).size.width / 2,
+              top: 12,
+              bottom: 12,
+              child: Container(
+                width: 1,
+                color: Colors.white.withOpacity(0.3),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
+      floatingActionButton: _currentTabIndex == 0
+          ? Obx(
+              () {
+                if (propertyController.properties.isEmpty) return const SizedBox.shrink();
+                return FloatingActionButton.extended(
+                  onPressed: () {
+                    final canAdd = subscriptionController.canAddProperty(propertyController.properties.length);
+                    if (!canAdd) {
+                      _showUpgradeDialog(context);
+                      return;
+                    }
+                    Get.to(() => const PropertyFormView());
+                  },
+                  backgroundColor: kSecondaryColor,
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'Add Property',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              },
+            )
+          : null,
     );
   }
 
@@ -491,8 +567,19 @@ class PropertyListView extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Close',
-                style: TextStyle(color: kPrimaryColor),
+                style: TextStyle(color: kTextColor.withOpacity(0.7)),
               ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Get.toNamed('/subscriptions');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: kWhite,
+              ),
+              child: const Text('View Plans'),
             ),
           ],
         );

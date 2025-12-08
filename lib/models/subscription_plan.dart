@@ -10,21 +10,17 @@ enum SubscriptionPlanTier {
 class SubscriptionPlan {
   final SubscriptionPlanTier tier;
   final int? maxUnits; // null means unlimited
+  final String productId; // Google Play product ID
+  final double price; // Price in USD
 
-  const SubscriptionPlan._(this.tier, this.maxUnits);
+  const SubscriptionPlan._(this.tier, this.maxUnits, this.productId, this.price);
 
-  static const SubscriptionPlan units1to5 =
-      SubscriptionPlan._(SubscriptionPlanTier.units1to5, 5);
-  static const SubscriptionPlan units6to15 =
-      SubscriptionPlan._(SubscriptionPlanTier.units6to15, 15);
-  static const SubscriptionPlan units16to50 =
-      SubscriptionPlan._(SubscriptionPlanTier.units16to50, 50);
-  static const SubscriptionPlan units51to100 =
-      SubscriptionPlan._(SubscriptionPlanTier.units51to100, 100);
-  static const SubscriptionPlan units101to200 =
-      SubscriptionPlan._(SubscriptionPlanTier.units101to200, 200);
-  static const SubscriptionPlan units201plus =
-      SubscriptionPlan._(SubscriptionPlanTier.units201plus, null);
+  static const SubscriptionPlan units1to5 = SubscriptionPlan._(SubscriptionPlanTier.units1to5, 5, 'units_1_5', 14.99);
+  static const SubscriptionPlan units6to15 = SubscriptionPlan._(SubscriptionPlanTier.units6to15, 15, 'units_6_15', 24.99);
+  static const SubscriptionPlan units16to50 = SubscriptionPlan._(SubscriptionPlanTier.units16to50, 50, 'units_16_50', 49.99);
+  static const SubscriptionPlan units51to100 = SubscriptionPlan._(SubscriptionPlanTier.units51to100, 100, 'units_51_100', 99.99);
+  static const SubscriptionPlan units101to200 = SubscriptionPlan._(SubscriptionPlanTier.units101to200, 200, 'units_100_200', 199.99);
+  static const SubscriptionPlan units201plus = SubscriptionPlan._(SubscriptionPlanTier.units201plus, null, 'units_201_plus', 249.99);
 
   static SubscriptionPlan fromTier(SubscriptionPlanTier tier) {
     switch (tier) {
@@ -44,19 +40,24 @@ class SubscriptionPlan {
   }
 
   static String displayName(SubscriptionPlanTier tier) {
-    switch (tier) {
-      case SubscriptionPlanTier.units1to5:
-        return "1–5 units (\$14.99/month)";
-      case SubscriptionPlanTier.units6to15:
-        return "6–15 units (\$24.99/month)";
-      case SubscriptionPlanTier.units16to50:
-        return "16–50 units (\$49.99/month)";
-      case SubscriptionPlanTier.units51to100:
-        return "51–100 units (\$99.99/month)";
-      case SubscriptionPlanTier.units101to200:
-        return "100–200 units (\$199.99/month)";
-      case SubscriptionPlanTier.units201plus:
-        return "201+ units (\$249.99/month)";
+    final plan = fromTier(tier);
+    return "${plan.maxUnits == null ? '201+' : plan.maxUnits == 5 ? '1–5' : plan.maxUnits == 15 ? '6–15' : plan.maxUnits == 50 ? '16–50' : plan.maxUnits == 100 ? '51–100' : '100–200'} units (\$${plan.price.toStringAsFixed(2)}/month)";
+  }
+
+  static List<SubscriptionPlan> get allPlans => [
+        units1to5,
+        units6to15,
+        units16to50,
+        units51to100,
+        units101to200,
+        units201plus,
+      ];
+
+  static SubscriptionPlan? fromProductId(String productId) {
+    try {
+      return allPlans.firstWhere((plan) => plan.productId == productId);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -65,5 +66,3 @@ class SubscriptionPlan {
     return currentUnitCount < maxUnits!;
   }
 }
-
-

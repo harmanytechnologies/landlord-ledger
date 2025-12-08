@@ -9,6 +9,7 @@ import '../views/properties/property_list_view.dart';
 import '../views/reminders/reminder_detail_view.dart';
 import '../views/reminders/reminder_form_view.dart';
 import '../views/reminders/reminder_list_view.dart';
+import '../views/subscriptions/subscription_view.dart';
 import '../views/tenants/tenant_list_view.dart';
 
 class GetPageList {
@@ -55,6 +56,11 @@ class GetPageList {
     GetPage(
       name: ReminderDetailView.routeName,
       page: () => const ReminderDetailView(reminderId: ''),
+    ),
+    // Subscription Route
+    GetPage(
+      name: SubscriptionView.routeName,
+      page: () => const SubscriptionView(),
     ),
   ];
 }

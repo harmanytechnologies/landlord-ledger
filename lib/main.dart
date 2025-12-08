@@ -5,6 +5,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:landlordledger/controllers/subscription_controller.dart';
 import 'package:landlordledger/helper/hive_keys.dart';
 import 'package:landlordledger/helper/notification_util.dart';
 import 'package:landlordledger/views/properties/property_list_view.dart';
@@ -24,6 +25,11 @@ void main() async {
     // statusBarIconBrightness: Brightness.dark,
     // );
     await NotificationUtil.init();
+
+    // Initialize subscription controller and check status
+    final subscriptionController = Get.put(SubscriptionController());
+    await subscriptionController.checkSubscriptionStatus();
+
     runApp(const MyApp());
   });
 }

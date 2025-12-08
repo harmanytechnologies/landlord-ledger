@@ -226,6 +226,9 @@ class _ReminderListViewState extends State<ReminderListView> with SingleTickerPr
       return title.contains(query) || type.contains(query) || description.contains(query);
     }).toList();
 
+    // Sort by date/time (latest first)
+    filteredReminders.sort((a, b) => b.date.compareTo(a.date));
+
     if (filteredReminders.isEmpty) {
       return Center(
         child: Padding(

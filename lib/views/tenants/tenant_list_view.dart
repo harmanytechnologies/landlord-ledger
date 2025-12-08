@@ -378,8 +378,19 @@ class _TenantListViewState extends State<TenantListView> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Close',
-                style: TextStyle(color: kPrimaryColor),
+                style: TextStyle(color: kTextColor.withOpacity(0.7)),
               ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Get.toNamed('/subscriptions');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kPrimaryColor,
+                foregroundColor: kWhite,
+              ),
+              child: const Text('View Plans'),
             ),
           ],
         );
