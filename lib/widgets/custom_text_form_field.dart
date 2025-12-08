@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:landlordledger/helper/colors.dart';
-import 'package:landlordledger/helper/text_style.dart';
 
 Widget customTextFormField(context,
     {Function? onPressed,
@@ -58,8 +57,8 @@ Widget customTextFormField(context,
     onChanged: onChanged,
     // style: TextStyle(color: Colors.white, fontSize: 12),
     decoration: InputDecoration(
-      hintStyle: Theme.of(context).textTheme.regular.copyWith(color: Colors.grey),
-      errorStyle: Theme.of(context).textTheme.regular.copyWith(color: kRedColor),
+      hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+      errorStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: kRedColor),
       // labelText: labelText,
       hintText: hintText,
       prefixIcon: prefixIcon,

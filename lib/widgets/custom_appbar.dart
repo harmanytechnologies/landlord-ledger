@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
-import '../helper/assets.dart';
 import '../helper/colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -63,13 +62,5 @@ Widget backButton(context) {
       ),
       shape: CircleBorder(),
     ),
-  );
-}
-
-Widget appbarTitleLogo() {
-  return SvgPicture.asset(
-    Assets.alphaFitAppBarIcon,
-    // height: 100.h,
-    width: 160,
   );
 }

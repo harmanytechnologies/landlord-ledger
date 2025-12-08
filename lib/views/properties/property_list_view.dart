@@ -1,14 +1,16 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:landlordledger/views/expenses/expense_list_view.dart';
 
 import '../../controllers/property_controller.dart';
+import '../../controllers/reminder_controller.dart';
 import '../../controllers/subscription_controller.dart';
 import '../../controllers/tenant_controller.dart';
 import '../../helper/colors.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_button.dart';
+import '../reminders/reminder_list_view.dart';
+import '../tenants/tenant_list_view.dart';
 import 'property_detail_view.dart';
 import 'property_form_view.dart';
 
@@ -147,6 +149,8 @@ class PropertyListView extends StatelessWidget {
   }
 
   Widget _buildPropertiesList(BuildContext context, PropertyController propertyController, TenantController tenantController) {
+    final reminderController = Get.put(ReminderController());
+
     return Column(
       children: [
         // Summary Cards
@@ -166,23 +170,37 @@ class PropertyListView extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Obx(
-                  () => _buildSummaryCard(
-                    context,
-                    'Tenants',
-                    tenantController.tenants.where((t) => t.propertyId != null && t.propertyId!.isNotEmpty).length.toString(),
-                    Icons.people_outline,
-                    kSecondaryColor,
+                  () => InkWell(
+                    onTap: () {
+                      Get.to(() => const TenantListView());
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: _buildSummaryCard(
+                      context,
+                      'Tenants',
+                      tenantController.tenants.where((t) => t.propertyId != null && t.propertyId!.isNotEmpty).length.toString(),
+                      Icons.people_outline,
+                      kSecondaryColor,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  'Reminders',
-                  '0', // TODO: Get actual reminder count
-                  Icons.notifications_outlined,
-                  kRedColor,
+                child: Obx(
+                  () => InkWell(
+                    onTap: () {
+                      Get.to(() => const ReminderListView());
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: _buildSummaryCard(
+                      context,
+                      'Reminders',
+                      reminderController.reminders.length.toString(),
+                      Icons.notifications_outlined,
+                      kRedColor,
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/property_controller.dart';
 import '../../controllers/subscription_controller.dart';
 import '../../controllers/tenant_controller.dart';
 import '../../helper/colors.dart';
-import '../../widgets/custom_appbar.dart';
 import 'tenant_detail_view.dart';
 import 'tenant_form_view.dart';
 
@@ -35,36 +35,48 @@ class _TenantListViewState extends State<TenantListView> {
     final subscriptionController = Get.put(SubscriptionController());
     final propertyController = Get.find<PropertyController>();
     return Scaffold(
-      appBar: CustomAppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              height: 32,
-              width: 32,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Landlord Ledger',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                  ),
-            ),
-          ],
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: kBackgroundColor,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: kBackgroundColor,
+          statusBarIconBrightness: Brightness.dark,
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: kTextColor),
+          onPressed: () => Get.back(),
+        ),
+        title: Text(
+          'Tenants',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: kTextColor,
+                fontSize: 20,
+              ),
+        ),
+        centerTitle: false,
       ),
       body: Obx(
         () {
-          // Apply search filter by name, phone, email
+          // Apply search filter by name, phone, email, or property name
           final query = _searchQuery.toLowerCase();
           final filteredTenants = tenantController.tenants.where((t) {
             if (query.isEmpty) return true;
             final name = t.name.toLowerCase();
             final email = (t.email ?? '').toLowerCase();
             final phone = (t.phone ?? '').toLowerCase();
-            return name.contains(query) || email.contains(query) || phone.contains(query);
+            // Also search by property name
+            String propertyName = '';
+            if (t.propertyId != null) {
+              final property = propertyController.getById(t.propertyId!);
+              if (property != null) {
+                propertyName = property.title.toLowerCase();
+              }
+            }
+            return name.contains(query) || 
+                   email.contains(query) || 
+                   phone.contains(query) ||
+                   propertyName.contains(query);
           }).toList();
 
           return _buildTenantsList(
@@ -110,43 +122,6 @@ class _TenantListViewState extends State<TenantListView> {
   ) {
     return Column(
       children: [
-        // Summary Cards
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  'Properties',
-                  propertyController.properties.length.toString(),
-                  Icons.home_rounded,
-                  kPrimaryColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  'Tenants',
-                  tenantController.tenants.length.toString(),
-                  Icons.people_outline,
-                  kGreenColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildSummaryCard(
-                  context,
-                  'Reminders',
-                  '0', // TODO: Get actual reminder count
-                  Icons.notifications_outlined,
-                  kRedColor,
-                ),
-              ),
-            ],
-          ),
-        ),
         // iOS-styled Search Field
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -157,7 +132,7 @@ class _TenantListViewState extends State<TenantListView> {
             ),
             child: CupertinoSearchTextField(
               controller: _searchController,
-              placeholder: 'Search by name, phone, or email',
+              placeholder: 'Search by name, phone, email, or property',
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value;
@@ -196,67 +171,6 @@ class _TenantListViewState extends State<TenantListView> {
                 ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSummaryCard(
-    BuildContext context,
-    String label,
-    String count,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: kWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            count,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 28,
-                  color: kTextColor,
-                  letterSpacing: -0.5,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: kTextColor.withOpacity(0.7),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
     );
   }
 

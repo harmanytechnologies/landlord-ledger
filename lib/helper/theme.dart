@@ -25,7 +25,6 @@ class Styles {
         titleSmall: TextStyle(color: kTextColor), // commonly used as smaller subtitle
         bodySmall: TextStyle(color: kTextColor.withOpacity(0.7)), // caption/overline merged here
       ),
-      fontFamily: "Blinker",
       buttonTheme: ButtonThemeData(
         buttonColor: kSecondaryColor,
       ),

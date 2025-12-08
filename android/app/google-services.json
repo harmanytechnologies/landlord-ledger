@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "335336228158",
+    "project_id": "landlord-ledger-51725",
+    "storage_bucket": "landlord-ledger-51725.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:335336228158:android:c3d6eddf08bc105f33986f",
+        "android_client_info": {
+          "package_name": "com.landlordLedger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOX9CUUncW9n0-s2DOUxUbRauDuNJAjd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,6 +6,9 @@ import '../views/expenses/expense_list_view.dart';
 import '../views/ledgers/ledger_detail_view.dart';
 import '../views/ledgers/ledger_form_view.dart';
 import '../views/properties/property_list_view.dart';
+import '../views/reminders/reminder_detail_view.dart';
+import '../views/reminders/reminder_form_view.dart';
+import '../views/reminders/reminder_list_view.dart';
 import '../views/tenants/tenant_list_view.dart';
 
 class GetPageList {
@@ -39,6 +42,19 @@ class GetPageList {
     GetPage(
       name: LedgerDetailView.routeName,
       page: () => const LedgerDetailView(ledgerId: ''),
+    ),
+    // Reminder Routes
+    GetPage(
+      name: ReminderListView.routeName,
+      page: () => const ReminderListView(),
+    ),
+    GetPage(
+      name: ReminderFormView.routeName,
+      page: () => const ReminderFormView(),
+    ),
+    GetPage(
+      name: ReminderDetailView.routeName,
+      page: () => const ReminderDetailView(reminderId: ''),
     ),
   ];
 }
