@@ -19,8 +19,8 @@ class SubscriptionPlan {
   static const SubscriptionPlan units6to15 = SubscriptionPlan._(SubscriptionPlanTier.units6to15, 15, 'units_6_15', 24.99);
   static const SubscriptionPlan units16to50 = SubscriptionPlan._(SubscriptionPlanTier.units16to50, 50, 'units_16_50', 49.99);
   static const SubscriptionPlan units51to100 = SubscriptionPlan._(SubscriptionPlanTier.units51to100, 100, 'units_51_100', 99.99);
-  static const SubscriptionPlan units101to200 = SubscriptionPlan._(SubscriptionPlanTier.units101to200, 200, 'units_100_200', 199.99);
-  static const SubscriptionPlan units201plus = SubscriptionPlan._(SubscriptionPlanTier.units201plus, null, 'units_201_plus', 249.99);
+  static const SubscriptionPlan units101to200 = SubscriptionPlan._(SubscriptionPlanTier.units101to200, 200, 'units_101_200', 199.99);
+  static const SubscriptionPlan units201plus = SubscriptionPlan._(SubscriptionPlanTier.units201plus, null, 'units_201_plus', 299.99);
 
   static SubscriptionPlan fromTier(SubscriptionPlanTier tier) {
     switch (tier) {
@@ -41,7 +41,7 @@ class SubscriptionPlan {
 
   static String displayName(SubscriptionPlanTier tier) {
     final plan = fromTier(tier);
-    return "${plan.maxUnits == null ? '201+' : plan.maxUnits == 5 ? '1–5' : plan.maxUnits == 15 ? '6–15' : plan.maxUnits == 50 ? '16–50' : plan.maxUnits == 100 ? '51–100' : '100–200'} units (\$${plan.price.toStringAsFixed(2)}/month)";
+    return "${plan.maxUnits == null ? '201+' : plan.maxUnits == 5 ? '1–5' : plan.maxUnits == 15 ? '6–15' : plan.maxUnits == 50 ? '16–50' : plan.maxUnits == 100 ? '51–100' : '101–200'} units (\$${plan.price.toStringAsFixed(2)}/month)";
   }
 
   static List<SubscriptionPlan> get allPlans => [
