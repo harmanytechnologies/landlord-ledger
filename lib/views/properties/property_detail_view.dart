@@ -10,6 +10,9 @@ import '../../controllers/expense_controller.dart';
 import '../../controllers/ledger_controller.dart';
 import '../../helper/colors.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart' as excel;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../tenants/tenant_detail_view.dart';
 import '../tenants/tenant_form_view.dart';
 import '../expenses/expense_detail_view.dart';
@@ -104,6 +107,15 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
                 color: kTextColor,
               ),
         ),
+        actions: _currentTabIndex == 3
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.ios_share, color: kTextColor),
+                  tooltip: 'Export Ledgers',
+                  onPressed: () => _exportLedgers(context),
+                ),
+              ]
+            : null,
       ),
       body: TabBarView(
         controller: _tabController,
@@ -899,6 +911,96 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
         );
       },
     );
+  }
+
+  Future<void> _exportLedgers(BuildContext context) async {
+    try {
+      final ledgerController = Get.find<LedgerController>();
+      final propertyController = Get.find<PropertyController>();
+
+      final allLedgers = ledgerController.getByPropertyId(widget.propertyId);
+
+      // Apply same search + tab filter logic as UI
+      final query = _searchQuery.toLowerCase();
+      final searchedLedgers = allLedgers.where((l) {
+        if (query.isEmpty) return true;
+        final title = l.title.toLowerCase();
+        final notes = (l.notes ?? '').toLowerCase();
+        final type = l.type.toLowerCase();
+        return title.contains(query) || notes.contains(query) || type.contains(query);
+      }).toList();
+
+      List filteredLedgers = searchedLedgers;
+      if (_ledgerTabIndex == 1) {
+        filteredLedgers = searchedLedgers.where((l) => l.type.toLowerCase() == 'income').toList();
+      } else if (_ledgerTabIndex == 2) {
+        filteredLedgers = searchedLedgers.where((l) => l.type.toLowerCase() == 'expense').toList();
+      }
+
+      if (filteredLedgers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No ledger entries to export for this view')),
+        );
+        return;
+      }
+
+      final property = propertyController.getById(widget.propertyId);
+      final dateFormat = DateFormat('yyyy-MM-dd');
+
+      // Create Excel workbook
+      final excelFile = excel.Excel.createExcel();
+      final String sheetName = 'Ledgers';
+      final sheet = excelFile[sheetName];
+
+      // Header row
+      sheet.appendRow([
+        'Date',
+        'Title',
+        'Type',
+        'Amount',
+        'Property',
+        'Notes',
+      ]);
+
+      for (final l in filteredLedgers) {
+        sheet.appendRow([
+          dateFormat.format(l.date),
+          l.title,
+          l.type,
+          l.amount,
+          property?.title ?? '',
+          l.notes ?? '',
+        ]);
+      }
+
+      final bytes = excelFile.encode();
+      if (bytes == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to generate Excel file')),
+        );
+        return;
+      }
+
+      final safePropertyName = (property?.title ?? 'property').replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_');
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final fileName = 'ledgers_${safePropertyName}_$timestamp.xlsx';
+
+      // Use a temporary file for sharing; the system share sheet lets the user
+      // choose apps like Files / Drive / Mail to save or send the export.
+      final tempDir = await getTemporaryDirectory();
+      final sharePath = '${tempDir.path}/$fileName';
+      final shareFile = File(sharePath);
+      await shareFile.writeAsBytes(bytes, flush: true);
+
+      await Share.shareXFiles(
+        [XFile(shareFile.path)],
+        text: 'Ledger export for ${property?.title ?? 'property'} (${_ledgerTabIndex == 0 ? 'All' : _ledgerTabIndex == 1 ? 'Income' : 'Expense'}).',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export ledgers: $e')),
+      );
+    }
   }
 
   Widget _buildExpenseListForTab(
