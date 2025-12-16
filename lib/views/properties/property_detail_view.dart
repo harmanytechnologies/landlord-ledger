@@ -949,11 +949,19 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
 
       // Create Excel workbook
       final excelFile = excel.Excel.createExcel();
-      final String sheetName = 'Ledgers';
-      final sheet = excelFile[sheetName];
+
+      // Get the default sheet (usually 'Sheet1') that Excel creates automatically
+      final defaultSheetName = excelFile.sheets.keys.first;
+      final defaultSheet = excelFile[defaultSheetName];
+
+      // Clear any existing content in the default sheet
+      // Delete all rows by iterating backwards to avoid index issues
+      for (int i = defaultSheet.maxRows - 1; i >= 0; i--) {
+        defaultSheet.removeRow(i);
+      }
 
       // Header row
-      sheet.appendRow([
+      defaultSheet.appendRow([
         'Date',
         'Title',
         'Type',
@@ -963,7 +971,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
       ]);
 
       for (final l in filteredLedgers) {
-        sheet.appendRow([
+        defaultSheet.appendRow([
           dateFormat.format(l.date),
           l.title,
           l.type,
