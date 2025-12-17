@@ -16,7 +16,7 @@ import 'package:share_plus/share_plus.dart';
 import '../tenants/tenant_detail_view.dart';
 import '../tenants/tenant_form_view.dart';
 import '../expenses/expense_detail_view.dart';
-import '../expenses/expense_form_view.dart';
+// import '../expenses/expense_form_view.dart'; // Hidden - Expenses tab is hidden for now
 import '../ledgers/ledger_form_view.dart';
 import '../ledgers/ledger_detail_view.dart';
 
@@ -40,7 +40,8 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    // Expenses tab is hidden for now (was 4, now 3)
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       setState(() {
         _currentTabIndex = _tabController.index;
@@ -99,15 +100,13 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
               ? 'Property Details'
               : _currentTabIndex == 1
                   ? 'Tenants'
-                  : _currentTabIndex == 2
-                      ? 'Expenses'
-                      : 'Ledgers',
+                  : 'Ledgers', // Expenses tab is hidden (was index 2)
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: kTextColor,
               ),
         ),
-        actions: _currentTabIndex == 3
+        actions: _currentTabIndex == 2 // Ledgers is now index 2 (was 3)
             ? [
                 IconButton(
                   icon: const Icon(Icons.ios_share, color: kTextColor),
@@ -122,7 +121,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
         children: [
           _buildPropertyDetailsTab(context, property),
           _buildTenantsTab(context, widget.propertyId),
-          _buildExpensesTab(context, widget.propertyId),
+          // _buildExpensesTab(context, widget.propertyId), // Hidden for now
           _buildLedgersTab(context, widget.propertyId),
         ],
       ),
@@ -168,11 +167,11 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
               activeIcon: Icon(Icons.people),
               label: 'Tenants',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Expenses',
-            ),
+            // BottomNavigationBarItem( // Expenses tab hidden for now
+            //   icon: Icon(Icons.receipt_long_outlined),
+            //   activeIcon: Icon(Icons.receipt_long),
+            //   label: 'Expenses',
+            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_balance_wallet_outlined),
               activeIcon: Icon(Icons.account_balance_wallet),
@@ -196,37 +195,38 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
                 ),
               ),
             )
-          : _currentTabIndex == 2
+          // Expenses tab FAB hidden (was index 2)
+          // : _currentTabIndex == 2
+          //     ? FloatingActionButton.extended(
+          //         onPressed: () {
+          //           Get.to(() => ExpenseFormView(propertyId: widget.propertyId));
+          //         },
+          //         backgroundColor: kSecondaryColor,
+          //         icon: const Icon(Icons.add, color: Colors.white),
+          //         label: const Text(
+          //           'Add Expense',
+          //           style: TextStyle(
+          //             color: Colors.white,
+          //             fontWeight: FontWeight.w600,
+          //           ),
+          //         ),
+          //       )
+          : _currentTabIndex == 2 // Ledgers is now index 2 (was 3)
               ? FloatingActionButton.extended(
                   onPressed: () {
-                    Get.to(() => ExpenseFormView(propertyId: widget.propertyId));
+                    Get.to(() => LedgerFormView(propertyId: widget.propertyId));
                   },
                   backgroundColor: kSecondaryColor,
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text(
-                    'Add Expense',
+                    'Add Entry',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 )
-              : _currentTabIndex == 3
-                  ? FloatingActionButton.extended(
-                      onPressed: () {
-                        Get.to(() => LedgerFormView(propertyId: widget.propertyId));
-                      },
-                      backgroundColor: kSecondaryColor,
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      label: const Text(
-                        'Add Entry',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
-                  : null,
+              : null,
     );
   }
 
@@ -436,6 +436,8 @@ class _PropertyDetailViewState extends State<PropertyDetailView> with SingleTick
     );
   }
 
+  // Expenses tab method - kept for future use when tab is re-enabled
+  // ignore: unused_element
   Widget _buildExpensesTab(BuildContext context, String propertyId) {
     final expenseController = Get.put(ExpenseController());
     final propertyController = Get.find<PropertyController>();

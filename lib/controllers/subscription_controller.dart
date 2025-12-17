@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:android_id/android_id.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -14,12 +15,12 @@ class SubscriptionController extends GetxController {
   static const String _planKey = 'current_subscription_tier';
   static const String _purchaseIdKey = 'purchase_id';
   static const String _purchaseTokenKey = 'purchase_token';
+  static const String _deviceIdKey = 'device_id';
 
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
   late StreamSubscription<List<PurchaseDetails>> _subscription;
-  
-  final Rx<SubscriptionPlanTier> _currentTier =
-      SubscriptionPlanTier.units1to5.obs;
+
+  final Rx<SubscriptionPlanTier> _currentTier = SubscriptionPlanTier.units1to5.obs;
   final RxBool isAvailable = false.obs;
   final RxList<ProductDetails> products = <ProductDetails>[].obs;
   final RxBool isLoading = false.obs;
@@ -58,12 +59,9 @@ class SubscriptionController extends GetxController {
     errorMessage.value = '';
 
     try {
-      final Set<String> productIds = SubscriptionPlan.allPlans
-          .map((plan) => plan.productId)
-          .toSet();
+      final Set<String> productIds = SubscriptionPlan.allPlans.map((plan) => plan.productId).toSet();
 
-      final ProductDetailsResponse response =
-          await _inAppPurchase.queryProductDetails(productIds);
+      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(productIds);
 
       if (response.error != null) {
         errorMessage.value = response.error!.message;
@@ -156,8 +154,7 @@ class SubscriptionController extends GetxController {
           EasyLoading.showError(
             purchaseDetails.error?.message ?? 'Purchase failed',
           );
-        } else if (purchaseDetails.status == PurchaseStatus.purchased ||
-            purchaseDetails.status == PurchaseStatus.restored) {
+        } else if (purchaseDetails.status == PurchaseStatus.purchased || purchaseDetails.status == PurchaseStatus.restored) {
           // Verify and process the purchase
           await _handlePurchaseSuccess(purchaseDetails);
         }
@@ -174,8 +171,7 @@ class SubscriptionController extends GetxController {
   Future<void> _handlePurchaseSuccess(PurchaseDetails purchaseDetails) async {
     try {
       // Get the plan from product ID
-      final SubscriptionPlan? plan =
-          SubscriptionPlan.fromProductId(purchaseDetails.productID);
+      final SubscriptionPlan? plan = SubscriptionPlan.fromProductId(purchaseDetails.productID);
 
       if (plan == null) {
         EasyLoading.showError('Invalid product ID');
@@ -188,10 +184,9 @@ class SubscriptionController extends GetxController {
       // Save purchase details
       final box = Hive.box(HiveKeys.mainBox);
       box.put(_purchaseIdKey, purchaseDetails.purchaseID);
-      
+
       if (Platform.isAndroid) {
-        final GooglePlayPurchaseDetails? googlePurchase =
-            purchaseDetails as GooglePlayPurchaseDetails?;
+        final GooglePlayPurchaseDetails? googlePurchase = purchaseDetails as GooglePlayPurchaseDetails?;
         if (googlePurchase != null && googlePurchase.verificationData.serverVerificationData.isNotEmpty) {
           // Store verification data which contains purchase token
           box.put(_purchaseTokenKey, googlePurchase.verificationData.serverVerificationData);
@@ -216,10 +211,10 @@ class SubscriptionController extends GetxController {
     PurchaseDetails purchaseDetails,
   ) async {
     try {
-      final box = Hive.box(HiveKeys.mainBox);
-      final String? userId = box.get('user_id') as String? ?? 'default_user';
+      final deviceId = await _getOrCreateDeviceId();
 
       final Map<String, dynamic> subscriptionData = {
+        'device_id': deviceId,
         'tier': plan.tier.index,
         'product_id': plan.productId,
         'purchase_id': purchaseDetails.purchaseID,
@@ -228,17 +223,13 @@ class SubscriptionController extends GetxController {
       };
 
       if (Platform.isAndroid) {
-        final GooglePlayPurchaseDetails? googlePurchase =
-            purchaseDetails as GooglePlayPurchaseDetails?;
+        final GooglePlayPurchaseDetails? googlePurchase = purchaseDetails as GooglePlayPurchaseDetails?;
         if (googlePurchase != null && googlePurchase.verificationData.serverVerificationData.isNotEmpty) {
           subscriptionData['purchase_token'] = googlePurchase.verificationData.serverVerificationData;
         }
       }
 
-      await FirebaseFirestore.instance
-          .collection('subscriptions')
-          .doc(userId)
-          .set(subscriptionData, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('subscriptions').doc(deviceId).set(subscriptionData, SetOptions(merge: true));
     } catch (e) {
       // Log error but don't fail the purchase
       print('Error syncing to Firebase: $e');
@@ -252,27 +243,41 @@ class SubscriptionController extends GetxController {
 
     try {
       // Check Firebase for subscription status
-      final box = Hive.box(HiveKeys.mainBox);
-      final String? userId = box.get('user_id') as String? ?? 'default_user';
+      final deviceId = await _getOrCreateDeviceId();
 
-      final doc = await FirebaseFirestore.instance
-          .collection('subscriptions')
-          .doc(userId)
-          .get();
+      final doc = await FirebaseFirestore.instance.collection('subscriptions').doc(deviceId).get();
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
         final int? tierIndex = data['tier'] as int?;
-        
-        if (tierIndex != null &&
-            tierIndex >= 0 &&
-            tierIndex < SubscriptionPlanTier.values.length) {
+
+        if (tierIndex != null && tierIndex >= 0 && tierIndex < SubscriptionPlanTier.values.length) {
           final tier = SubscriptionPlanTier.values[tierIndex];
           setTier(tier);
         }
       }
     } catch (e) {
       print('Error checking subscription status: $e');
+    }
+  }
+
+  Future<String> _getOrCreateDeviceId() async {
+    try {
+      final box = Hive.box(HiveKeys.mainBox);
+      final existing = box.get(_deviceIdKey);
+      if (existing is String && existing.isNotEmpty) {
+        return existing;
+      }
+      final newId = await AndroidId().getId();
+      if (newId != null && newId.isNotEmpty) {
+        box.put(_deviceIdKey, newId);
+        return newId;
+      } else {
+        throw Exception("Failed to obtain device ID");
+      }
+    } catch (e) {
+      print('Error getting or creating device ID: $e');
+      rethrow;
     }
   }
 

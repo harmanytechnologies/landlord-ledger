@@ -69,7 +69,7 @@ class LedgerDetailView extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: kRedColor),
+            icon: const Icon(Icons.delete_outline, color: kTextColor),
             onPressed: () {
               _showDeleteConfirmation(context, ledgerController, ledger);
             },
